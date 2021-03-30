@@ -1,7 +1,7 @@
 
-from flask import Flask, jsonify
+from flask import Flask, jsonify, render_template, redirect
 import scrape_mars
-import pymongo
+from flask_pymongo import PyMongo
 
 conn = 'mongodb://localhost:27017'
 client = pymongo.MongoClient(conn)
@@ -13,18 +13,15 @@ app = Flask(__name__)
 @app.route("/")
 def welcome():
     mars_db = db.mars_db.find()
-    """List all available api routes."""
-    return (
-        f"Available Routes:<br/>"
-        f"/scrape"
-    )
+    return render_template("index.html", dict = mars_db)
 
 
 @app.route("/scrape")
-def web_scraper():
-    scrape_mars.scrape()
-    db.mars_db.insert(scrape_mars.scrape())
-    return jsonify(scrape_mars.scrape())
+def scraper():
+    mars_db = db.mars_db
+    mars_data = scrape_mars.scrape()
+    mars_db.update({}, mars_data, upsert=True)
+    return redirect('/')
     
 
 if __name__ == "__main__":
